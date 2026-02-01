@@ -1,0 +1,7 @@
+.meta dt { font-weight: 600; margin-top: 0.5rem; }
+.meta dd { margin-left: 0; }
+.upload, .versions { margin-top: 1.5rem; }
+.upload input[type="file"] { margin-right: 0.5rem; }
+.versions ul { list-style: none; padding: 0; }
+.versions li { padding: 0.25rem 0; display: flex; align-items: center; gap: 0.5rem; }
+.error { color: #c00; }

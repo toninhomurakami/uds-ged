@@ -1,0 +1,86 @@
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h1 class="h4 mb-0">Documentos</h1>
+  <a routerLink="/app/documents/new" class="btn btn-primary">Novo documento</a>
+</div>
+<div class="card mb-3">
+  <div class="card-body">
+    <div class="row g-2 align-items-end">
+      <div class="col-md-4">
+        <label class="form-label small text-muted">Título</label>
+        <input type="text" class="form-control form-control-sm" placeholder="Título" [ngModel]="filterTitle()" (ngModelChange)="filterTitle.set($event)" />
+      </div>
+      <div class="col-md-3">
+        <label class="form-label small text-muted">Status</label>
+        <select class="form-select form-select-sm" [ngModel]="filterStatus()" (ngModelChange)="filterStatus.set($event)">
+          <option value="">Todos</option>
+          <option value="DRAFT">Rascunho</option>
+          <option value="PUBLISHED">Publicado</option>
+          <option value="ARCHIVED">Arquivado</option>
+        </select>
+      </div>
+      <div class="col-md-2">
+        <button type="button" class="btn btn-outline-primary btn-sm w-100" (click)="onFilter()">Filtrar</button>
+      </div>
+    </div>
+  </div>
+</div>
+@if (error()) {
+  <div class="alert alert-danger py-2">{{ error() }}</div>
+}
+@if (loading()) {
+  <div class="text-center py-4"><span class="spinner-border spinner-border-sm"></span> Carregando...</div>
+} @else {
+  <div class="card">
+    <div class="table-responsive">
+      <table class="table table-hover table-striped mb-0">
+        <thead class="table-light">
+          <tr>
+            <th class="sortable" (click)="onSort('title')" title="Clique para ordenar">
+              Título
+              @if (sortField() === 'title') {
+                <span class="sort-icon">{{ sortDirection() === 'asc' ? '▲' : '▼' }}</span>
+              }
+            </th>
+            <th class="sortable" (click)="onSort('status')" title="Clique para ordenar">
+              Status
+              @if (sortField() === 'status') {
+                <span class="sort-icon">{{ sortDirection() === 'asc' ? '▲' : '▼' }}</span>
+              }
+            </th>
+            <th class="sortable" (click)="onSort('owner.name')" title="Clique para ordenar">
+              Proprietário
+              @if (sortField() === 'owner.name') {
+                <span class="sort-icon">{{ sortDirection() === 'asc' ? '▲' : '▼' }}</span>
+              }
+            </th>
+            <th class="sortable" (click)="onSort('updatedAt')" title="Clique para ordenar">
+              Atualizado
+              @if (sortField() === 'updatedAt') {
+                <span class="sort-icon">{{ sortDirection() === 'asc' ? '▲' : '▼' }}</span>
+              }
+            </th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (doc of docs(); track doc.id) {
+            <tr>
+              <td>{{ doc.title }}</td>
+              <td><span class="badge" [ngClass]="{'bg-warning text-dark': doc.status === 'DRAFT', 'bg-success': doc.status === 'PUBLISHED', 'bg-danger': doc.status === 'ARCHIVED'}">{{ doc.status }}</span></td>
+              <td>{{ doc.ownerName }}</td>
+              <td>{{ doc.updatedAt | date:'dd/MM/yyyy HH:mm:ss' }}</td>
+              <td><a [routerLink]="['/app/documents', doc.id]" class="btn btn-sm btn-outline-primary">Ver</a></td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    <div class="card-footer d-flex justify-content-between align-items-center flex-wrap gap-2">
+      <span class="small text-muted">Página {{ currentPage() + 1 }} de {{ totalPages() || 1 }} ({{ totalElements() }} itens)</span>
+      <div class="btn-group btn-group-sm">
+        <button type="button" class="btn btn-outline-secondary" [disabled]="currentPage() === 0" (click)="goToPage(currentPage() - 1)">Anterior</button>
+        <button type="button" class="btn btn-outline-secondary" [disabled]="currentPage() >= totalPages() - 1" (click)="goToPage(currentPage() + 1)">Próxima</button>
+      </div>
+    </div>
+  </div>
+}

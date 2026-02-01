@@ -1,0 +1,7 @@
+/* Global styles + Bootstrap 5.3.8 via index.html */
+.cursor-pointer {
+  cursor: pointer;
+}
+.navbar .nav-link.active {
+  font-weight: 600;
+}

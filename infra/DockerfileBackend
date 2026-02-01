@@ -1,0 +1,33 @@
+# Build stage
+FROM eclipse-temurin:21-jdk-alpine AS build
+
+RUN apk add --no-cache curl unzip
+
+# Baixa e instala Maven 3.8.6 em /opt/maven (Maven Central - acessível quando archive.apache.org falha)
+RUN curl -sL -o /tmp/maven.zip \
+    "https://repo.maven.apache.org/maven2/org/apache/maven/apache-maven/3.8.6/apache-maven-3.8.6-bin.zip" \
+    && unzip -q /tmp/maven.zip -d /opt \
+    && mv /opt/apache-maven-3.8.6 /opt/maven \
+    && rm /tmp/maven.zip
+
+ENV PATH="/opt/maven/bin:${PATH}"
+
+# Cria a pasta /src e copia o projeto java para /src (context = raiz do projeto)
+RUN mkdir -p /src
+COPY backend/java /src/java
+
+WORKDIR /src/java
+RUN mvn clean install -B
+
+# Runtime stage: copia o JAR do estágio de build
+FROM eclipse-temurin:21-jre-alpine
+
+RUN mkdir -p /opt/ged /var/ged/data/storage
+
+COPY --from=build /src/java/target/ged-1.0.0.SNAPSHOT.jar /opt/ged/
+
+WORKDIR /opt/ged
+
+EXPOSE 8080
+
+ENTRYPOINT ["java", "-Dspring.profiles.active=docker", "-jar", "/opt/ged/ged-1.0.0.SNAPSHOT.jar"]

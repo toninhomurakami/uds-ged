@@ -1,0 +1,131 @@
+<p class="mb-3 d-flex gap-2">
+  <a routerLink="/app/documents" class="btn btn-outline-secondary btn-sm">← Voltar</a>
+  <a routerLink="/app/documents/new" class="btn btn-outline-secondary btn-sm">Novo Documento</a>
+</p>
+@if (error()) {
+  <div class="alert alert-danger py-2">{{ error() }}</div>
+}
+@if (loading()) {
+  <div class="text-center py-4"><span class="spinner-border spinner-border-sm"></span> Carregando...</div>
+} @else if (doc(); as d) {
+  <div class="card mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+      <div class="d-flex align-items-center gap-2">
+        <h1 class="h5 mb-0">{{ d.title }}</h1>
+        <span class="badge" [ngClass]="{'bg-warning text-dark': d.status === 'DRAFT', 'bg-success': d.status === 'PUBLISHED', 'bg-danger': d.status === 'ARCHIVED'}">{{ d.status }}</span>
+      </div>
+      @if (!editing()) {
+        <div class="d-flex gap-1">
+          <button type="button" class="btn btn-outline-primary btn-sm" (click)="startEdit()">Editar</button>
+          @if (isOwner()) {
+            <button type="button" class="btn btn-outline-danger btn-sm" (click)="openDeleteConfirm()">Excluir</button>
+          }
+        </div>
+      }
+    </div>
+    @if (!editing()) {
+      <div class="card-body">
+        <dl class="row mb-0">
+          <dt class="col-sm-3 text-muted">Descrição</dt>
+          <dd class="col-sm-9">{{ d.description || '-' }}</dd>
+          <dt class="col-sm-3 text-muted">Proprietário</dt>
+          <dd class="col-sm-9">{{ d.ownerName }}</dd>
+          <dt class="col-sm-3 text-muted">Criado em</dt>
+          <dd class="col-sm-9">{{ d.createdAt | date:'dd/MM/yyyy HH:mm:ss' }}</dd>
+          <dt class="col-sm-3 text-muted">Atualizado em</dt>
+          <dd class="col-sm-9">{{ d.updatedAt | date:'dd/MM/yyyy HH:mm:ss' }}</dd>
+          @if (d.tags?.length) {
+            <dt class="col-sm-3 text-muted">Tags</dt>
+            <dd class="col-sm-9">{{ d.tags.join(', ') }}</dd>
+          }
+        </dl>
+      </div>
+    } @else {
+      <div class="card-body">
+        <form (ngSubmit)="saveEdit()">
+          <div class="mb-3">
+            <label class="form-label">Título (obrigatório, máx. 50)</label>
+            <input type="text" class="form-control" [(ngModel)]="editTitle" name="editTitle" maxlength="50" required placeholder="Título" />
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Descrição (máx. 100)</label>
+            <input type="text" class="form-control" [(ngModel)]="editDescription" name="editDescription" maxlength="100" placeholder="Descrição" />
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Tags (separadas por vírgula, cada uma máx. 25)</label>
+            <input type="text" class="form-control" [(ngModel)]="editTagsStr" name="editTagsStr" placeholder="tag1, tag2" />
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Status</label>
+            <select class="form-select" [(ngModel)]="editStatus" name="editStatus">
+              <option value="DRAFT">Rascunho</option>
+              <option value="PUBLISHED">Publicado</option>
+              <option value="ARCHIVED">Arquivado</option>
+            </select>
+          </div>
+          <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-primary" [disabled]="editSaving()">Salvar</button>
+            <button type="button" class="btn btn-outline-secondary" [disabled]="editSaving()" (click)="cancelEdit()">Cancelar</button>
+          </div>
+        </form>
+      </div>
+    }
+  </div>
+  <div class="card mb-4">
+    <div class="card-header"><h2 class="h6 mb-0">Nova versão</h2></div>
+    <div class="card-body">
+      <div class="mb-2">
+        <input type="file" class="form-control form-control-sm" accept=".pdf,.png,.jpg,.jpeg" (change)="onFileSelected($event)" />
+      </div>
+      @if (uploadFile()) {
+        <button type="button" class="btn btn-primary btn-sm" (click)="uploadVersion()">Enviar</button>
+      }
+      @if (uploadError()) {
+        <div class="alert alert-danger py-2 mt-2">{{ uploadError() }}</div>
+      }
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-header"><h2 class="h6 mb-0">Versões</h2></div>
+    <div class="card-body">
+      @if (versions().length === 0) {
+        <p class="text-muted mb-0">Nenhuma versão anexada.</p>
+      } @else {
+        <ul class="list-group list-group-flush">
+          @for (v of versions(); track v.id) {
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+              <span>{{ (v.fileKey ? v.fileKey.split('/').pop() : '') }} — {{ v.uploadedAt | date:'dd/MM/yyyy HH:mm:ss' }} — {{ v.uploadedByName }}</span>
+              <button type="button" class="btn btn-sm btn-outline-primary" (click)="downloadVersion(v.id)">Download</button>
+            </li>
+          }
+        </ul>
+        <div class="mt-2">
+          <button type="button" class="btn btn-primary btn-sm" (click)="downloadCurrent()">Download versão atual</button>
+        </div>
+      }
+    </div>
+  </div>
+}
+
+@if (showDeleteModal()) {
+  <div class="modal d-block" tabindex="-1" role="dialog" style="background: rgba(0,0,0,0.5);">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Confirmar exclusão</h5>
+          <button type="button" class="btn-close" (click)="closeDeleteConfirm()" aria-label="Fechar"></button>
+        </div>
+        <div class="modal-body">
+          <p class="mb-0">Esta operação irá excluir o documento <strong>{{ doc()?.title }}</strong> 
+            e os arquivos carregados. <br>
+            <br>
+            Deseja prosseguir?</p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" (click)="closeDeleteConfirm()">Cancelar</button>
+          <button type="button" class="btn btn-danger" (click)="confirmDelete()">Confirmar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+}

@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Guia do Usuário – GED</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 800px; margin: 0 auto; padding: 1.5rem; line-height: 1.6; }
+    h1 { border-bottom: 2px solid #0d6efd; padding-bottom: 0.25rem; }
+    h2 { margin-top: 2rem; color: #0d6efd; }
+    h3 { margin-top: 1.5rem; }
+    img { max-width: 100%; height: auto; border: 1px solid #ddd; border-radius: 4px; margin: 0.5rem 0; }
+    ul { margin: 0.5rem 0; }
+    p { margin: 0.75rem 0; }
+  </style>
+</head>
+<body>
+
+  <h1>Guia do Usuário – GED</h1>
+  <p>Este guia auxilia no uso do sistema <strong>GED (Gerenciamento Eletrônico de Documentos)</strong>.</p>
+  <p>Quando o sistema for carregado pela primeira vez, o banco de dados será criado e o arquivo de migrations será aplicado automaticamente. Não é necessário executar scripts de banco manualmente.</p>
+  <p>A <strong>documentação da API</strong> do backend (Swagger) está disponível em <strong><a href="http://localhost:8080/swagger-ui/index.html" target="_blank" rel="noopener">http://localhost:8080/swagger-ui/index.html</a></strong> quando o backend está em execução. Nessa página é possível consultar todos os endpoints e testar as chamadas (após fazer login, use o botão "Authorize" para informar o token JWT).</p>
+
+  <h2>Setup Inicial</h2>
+  <p>Para o setup inicial do sistema, abra o navegador e acesse: <strong>http://localhost</strong></p>
+  <p>Como o banco de dados está vazio e não há nenhum usuário cadastrado, será exibida a tela de cadastro do primeiro usuário administrador:</p>
+  <p><img src="imgs/img_001.jpg" alt="Tela de setup inicial" /></p>
+  <p>Preencha os campos <strong>Nome</strong>, <strong>Login</strong> e <strong>Senha</strong> para criar o usuário Administrador e clique no botão para prosseguir. Após o cadastro, você será redirecionado para a tela de login.</p>
+
+  <h2>Login</h2>
+  <p>A tela de login deve ser semelhante à imagem abaixo:</p>
+  <p><img src="imgs/img_002.jpg" alt="Tela de login" /></p>
+  <p>Digite seu <strong>usuário</strong> e <strong>senha</strong> e clique em <strong>Entrar</strong>. Em caso de sucesso, você será levado à tela inicial de documentos.</p>
+
+  <h2>Cadastro de usuário</h2>
+  <p>A tela de cadastro de usuários deve parecer com a imagem abaixo. Esta funcionalidade está disponível apenas para usuários com perfil <strong>ADMIN</strong>.</p>
+  <p><img src="imgs/img_003.jpg" alt="Tela de cadastro de usuários" /></p>
+  <p>Trata-se de uma SPA (Single Page Application). Do lado esquerdo estão listados os usuários. Ao clicar em um registro, os dados dele são carregados nos campos do formulário à direita.</p>
+  <ul>
+    <li><strong>Alterar:</strong> corrija as informações desejadas e clique em <strong>Salvar</strong>.</li>
+    <li><strong>Novo usuário:</strong> clique no botão <strong>Novo</strong> para limpar o formulário. Preencha os dados e clique em <strong>Salvar</strong>. O novo usuário aparecerá na lista à esquerda.</li>
+    <li><strong>Excluir:</strong> o botão <strong>Excluir</strong> remove o usuário selecionado. <strong>Atenção:</strong> ao confirmar a exclusão, todos os documentos que ele tiver criado e todos os arquivos carregados (uploads), inclusive em documentos de outros usuários, serão removidos. No caso de arquivo carregado em documento de terceiros, o documento permanece, mas o arquivo carregado é removido.</li>
+  </ul>
+  <p><strong>Perfis:</strong></p>
+  <ul>
+    <li>Usuário com perfil <strong>USER</strong> pode apenas cadastrar e visualizar documentos.</li>
+    <li>Usuário com perfil <strong>ADMIN</strong> pode fazer tudo que o USER faz e, além disso, criar e gerenciar outros usuários.</li>
+  </ul>
+
+  <h2>Cadastro de novo documento</h2>
+  <p>A tela de cadastro de documento é acessada a partir da tela inicial de documentos, clicando no botão <strong>Novo documento</strong>:</p>
+  <p><img src="imgs/img_004.jpg" alt="Botão Novo documento" /></p>
+  <p>O documento é criado em <strong>duas etapas</strong>.</p>
+
+  <h3>Primeira etapa – Dados do documento</h3>
+  <p>Preencha o formulário com título, descrição, tags e status, conforme a imagem:</p>
+  <p><img src="imgs/img_005.jpg" alt="Formulário de criação de documento" /></p>
+  <p>Se escolher o status <strong>Rascunho</strong>, o documento será visualizado apenas pelo usuário que o criou nas consultas. Após preencher, clique em <strong>Criar</strong>.</p>
+
+  <h3>Segunda etapa – Versões e arquivos</h3>
+  <p>Depois de criado, será exibida a tela de detalhe do documento:</p>
+  <p><img src="imgs/img_006.jpg" alt="Tela de detalhe do documento" /></p>
+  <p>Para carregar um arquivo, clique no botão <strong>Escolher ficheiro</strong>. Em seguida, aparecerá o botão <strong>Enviar</strong>:</p>
+  <p><img src="imgs/img_007.jpg" alt="Botão Enviar após escolher ficheiro" /></p>
+  <p>O arquivo carregado aparecerá logo abaixo:</p>
+  <p><img src="imgs/img_008.jpg" alt="Arquivo carregado listado" /></p>
+  <p>Se você repetir o processo, o novo arquivo será carregado e listado como outra versão:</p>
+  <p><img src="imgs/img_009.jpg" alt="Múltiplas versões" /></p>
+  <ul>
+    <li><strong>Download:</strong> use o botão <strong>Download</strong> ao lado de cada versão para baixar aquela versão do arquivo.</li>
+    <li><strong>Download versão atual:</strong> use esse botão para baixar a versão mais recente (último arquivo carregado).</li>
+    <li><strong>Excluir:</strong> o botão <strong>Excluir</strong>, ao lado do título do documento (junto com <strong>Editar</strong>), remove o registro do documento e os arquivos associados.</li>
+    <li><strong>Editar:</strong> use para atualizar título, descrição, tags e status do documento.</li>
+  </ul>
+
+  <h2>Lista de documentos</h2>
+  <p>A tela de lista de documentos deve ser semelhante à imagem abaixo:</p>
+  <p><img src="imgs/img_010.jpg" alt="Lista de documentos" /></p>
+  <p>Lembre-se: documentos com status <strong>Rascunho</strong> (Draft) aparecem apenas para o próprio criador.</p>
+  <p>A pesquisa é feita preenchendo um ou ambos os campos <strong>Título</strong> e <strong>Status</strong> ao lado do botão <strong>Filtrar</strong> e clicando em <strong>Filtrar</strong>.</p>
+  <p>É possível <strong>ordenar</strong> a lista clicando nos cabeçalhos das colunas <strong>Título</strong>, <strong>Status</strong>, <strong>Proprietário</strong> ou <strong>Atualizado</strong>. O primeiro clique ordena em sentido ascendente; clicando novamente na mesma coluna, a ordenação inverte para descendente. A coluna e a direção atuais são indicadas por uma seta (▲ ou ▼) ao lado do nome da coluna.</p>
+  <p>Ao entrar com outro usuário, o documento em status Draft não aparece na lista, como na imagem:</p>
+  <p><img src="imgs/img_011.jpg" alt="Lista sem documento Draft para outro usuário" /></p>
+  <p>Isso é esperado: para que outros usuários vejam o documento, o criador deve alterar o status para algo diferente de <strong>Rascunho</strong> (por exemplo, Publicado).</p>
+  <p>Um usuário diferente pode enviar um novo arquivo a um documento já existente, mesmo que o documento tenha sido criado por outro usuário:</p>
+  <p><img src="imgs/img_012.jpg" alt="Outro usuário enviando arquivo ao documento" /></p>
+
+  <h2>Exclusão de documento</h2>
+  <p>O botão <strong>Excluir</strong> do documento fica disponível apenas para o usuário que criou o documento. Se a exclusão for confirmada, todos os arquivos carregados (inclusive por outros usuários) serão removidos do sistema de arquivos.</p>
+  <p>A tela de confirmação deve ser semelhante à imagem:</p>
+  <p><img src="imgs/img_013.jpg" alt="Confirmação de exclusão de documento" /></p>
+
+  <h2>Exclusão de usuário</h2>
+  <p>No cadastro de usuários, ao selecionar um usuário e clicar em <strong>Excluir</strong>, será exibido um diálogo de confirmação:</p>
+  <p><img src="imgs/img_014.jpg" alt="Confirmação de exclusão de usuário" /></p>
+  <p>Se confirmado, os documentos criados por esse usuário e os arquivos carregados por ele serão removidos do sistema. Tenha atenção ao excluir usuários que tenham muitos documentos ou uploads associados.</p>
+
+</body>
+</html>

@@ -1,0 +1,11 @@
+.sortable { cursor: pointer; user-select: none; white-space: nowrap; }
+.sortable:hover { background-color: rgba(0, 0, 0, 0.05); }
+.sort-icon { margin-left: 0.25rem; font-size: 0.75em; opacity: 0.8; }
+.filters { display: flex; gap: 0.5rem; margin-bottom: 1rem; }
+.filters input, .filters select { padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px; }
+.doc-table { width: 100%; border-collapse: collapse; }
+.doc-table th, .doc-table td { padding: 0.5rem; text-align: left; border-bottom: 1px solid #eee; }
+.doc-table a { color: #1976d2; text-decoration: none; }
+.pagination { margin-top: 1rem; display: flex; align-items: center; gap: 1rem; }
+.pagination button:disabled { opacity: 0.5; cursor: not-allowed; }
+.error { color: #c00; margin-bottom: 0.5rem; }

@@ -1,0 +1,22 @@
+# Git e IDE
+.git
+.idea
+.github
+.vscode
+*.md
+
+# Backend: não copiar target (build local)
+backend/java/target
+
+# Frontend: não copiar node_modules e build
+frontend/node_modules
+frontend/dist
+frontend/.angular
+
+# Infra: não precisamos da pasta no contexto de build
+infra/*.old
+infra/README.md
+
+# Outros
+*.log
+.DS_Store

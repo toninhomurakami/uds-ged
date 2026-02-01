@@ -1,0 +1,4 @@
+form label { display: block; margin-top: 0.5rem; }
+form input, form select { width: 100%; max-width: 400px; padding: 0.5rem; margin-bottom: 0.25rem; box-sizing: border-box; }
+form button { margin-top: 1rem; padding: 0.5rem 1rem; cursor: pointer; }
+.error { color: #c00; }

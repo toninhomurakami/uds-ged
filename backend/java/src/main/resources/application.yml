@@ -1,0 +1,31 @@
+spring:
+  application:
+    name: ged
+  datasource:
+    url: jdbc:mysql://localhost:3306/ged?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    username: root
+    password: '*SenhaSegur@92*'
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.MySQLDialect
+    open-in-view: false
+  servlet:
+    multipart:
+      max-file-size: 20MB
+      max-request-size: 20MB
+
+ged:
+  storage:
+    base-path: /var/ged/data/storage
+  jwt:
+    secret: ${JWT_SECRET:ged-secret-key-change-in-production-min-256-bits}
+    expiration-ms: 3600000  # 1 hora
+
+server:
+  port: 8080

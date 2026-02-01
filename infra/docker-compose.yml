@@ -1,0 +1,48 @@
+services:
+  db:
+    image: mysql:9
+    environment:
+      MYSQL_ROOT_PASSWORD: '*SenhaSegur@92*'
+      MYSQL_DATABASE: ged
+    ports:
+      - "3306:3306"
+    volumes:
+      - /var/ged/data/mysql:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-p*SenhaSegur@92*"]
+      interval: 5s
+      timeout: 60s
+      retries: 3
+    networks:
+      - ged-network
+
+  backend:
+    build:
+      context: ..
+      dockerfile: infra/DockerfileBackend
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - /var/ged/data/storage:/var/ged/data/storage
+    networks:
+      - ged-network
+
+  frontend:
+    build:
+      context: ..
+      dockerfile: infra/DockerfileFrontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - ged-network
+
+networks:
+  ged-network:
+    driver: bridge

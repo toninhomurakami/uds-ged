@@ -1,0 +1,32 @@
+<p class="mb-3"><a routerLink="/app/documents" class="btn btn-outline-secondary btn-sm">← Voltar</a></p>
+<h1 class="h4 mb-4">Novo documento</h1>
+@if (error()) {
+  <div class="alert alert-danger py-2 mb-3">{{ error() }}</div>
+}
+<div class="card">
+  <div class="card-body">
+    <form (ngSubmit)="submit()">
+      <div class="mb-3">
+        <label class="form-label">Título (obrigatório, máx. 50)</label>
+        <input type="text" class="form-control" [ngModel]="title" (ngModelChange)="updateTitle($event)" name="title" maxlength="50" required placeholder="Título" />
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Descrição (máx. 100)</label>
+        <input type="text" class="form-control" [(ngModel)]="description" name="description" maxlength="100" placeholder="Descrição" />
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Tags (separadas por vírgula, cada uma máx. 25)</label>
+        <input type="text" class="form-control" [ngModel]="tagsStr" (ngModelChange)="updateTagsStr($event)" name="tagsStr" placeholder="tag1, tag2" />
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Status</label>
+        <select class="form-select" [(ngModel)]="status" name="status">
+          <option value="DRAFT">Rascunho</option>
+          <option value="PUBLISHED">Publicado</option>
+          <option value="ARCHIVED">Arquivado</option>
+        </select>
+      </div>
+      <button type="submit" class="btn btn-primary" [disabled]="loading()">Criar</button>
+    </form>
+  </div>
+</div>
