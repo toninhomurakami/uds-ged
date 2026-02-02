@@ -9,6 +9,10 @@ on:
 jobs:
   backend:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      max-parallel: 1
+      fail-fast: false
     steps:
       - uses: actions/checkout@v4
 
@@ -27,7 +31,12 @@ jobs:
           JWT_SECRET: ged-ci-secret-key-min-256-bits-for-tests
 
   frontend:
+    needs: [backend]
     runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      max-parallel: 1
+      fail-fast: false
     steps:
       - uses: actions/checkout@v4
 
