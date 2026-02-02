@@ -1,8 +1,8 @@
 package br.com.uds.tools.ged.web.controller;
 
-import br.com.uds.tools.ged.service.UserService;
 import br.com.uds.tools.ged.dto.InitialSetupRequest;
 import br.com.uds.tools.ged.dto.UserResponse;
+import br.com.uds.tools.ged.facade.UserFacade;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -16,27 +16,21 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class SetupController {
 
-    private final UserService userService;
+    private final UserFacade userFacade;
 
     @GetMapping("/status")
     public ResponseEntity<Map<String, Boolean>> status() {
-        boolean needsSetup = userService.count() == 0;
+        boolean needsSetup = userFacade.count() == 0;
         return ResponseEntity.ok(Map.of("needsSetup", needsSetup));
     }
 
     @PostMapping("/initial-admin")
     public ResponseEntity<UserResponse> createInitialAdmin(@Valid @RequestBody InitialSetupRequest request) {
-        UserResponse created = userService.createInitialAdmin(
+        UserResponse created = userFacade.createInitialAdmin(
                 request.getName(),
                 request.getUsername(),
                 request.getPassword()
         );
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
-    }
-
-    @ExceptionHandler({ IllegalStateException.class, IllegalArgumentException.class })
-    public ResponseEntity<Map<String, String>> handleSetupException(RuntimeException ex) {
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(Map.of("message", ex.getMessage() != null ? ex.getMessage() : "Requisição inválida"));
     }
 }

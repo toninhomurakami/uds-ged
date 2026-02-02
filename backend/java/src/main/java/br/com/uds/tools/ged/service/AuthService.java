@@ -1,9 +1,10 @@
 package br.com.uds.tools.ged.service;
 
 import br.com.uds.tools.ged.domain.User;
-import br.com.uds.tools.ged.security.JwtService;
 import br.com.uds.tools.ged.dto.LoginRequest;
 import br.com.uds.tools.ged.dto.LoginResponse;
+import br.com.uds.tools.ged.security.JwtService;
+import br.com.uds.tools.ged.service.user.GetByUsernameUserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -12,7 +13,7 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class AuthService {
 
-    private final UserService userService;
+    private final GetByUsernameUserService userService;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
 

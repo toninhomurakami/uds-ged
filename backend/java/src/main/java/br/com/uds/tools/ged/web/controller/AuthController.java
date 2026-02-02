@@ -1,8 +1,8 @@
 package br.com.uds.tools.ged.web.controller;
 
-import br.com.uds.tools.ged.service.AuthService;
 import br.com.uds.tools.ged.dto.LoginRequest;
 import br.com.uds.tools.ged.dto.LoginResponse;
+import br.com.uds.tools.ged.service.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;

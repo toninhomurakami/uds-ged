@@ -1,10 +1,6 @@
 package br.com.uds.tools.ged.repository;
 
-import br.com.uds.tools.ged.domain.Document;
-import br.com.uds.tools.ged.domain.DocumentStatus;
-import br.com.uds.tools.ged.domain.DocumentVersion;
-import br.com.uds.tools.ged.domain.Role;
-import br.com.uds.tools.ged.domain.User;
+import br.com.uds.tools.ged.domain.*;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
