@@ -39,13 +39,14 @@ O uso de **Jakarta EE** (jakarta.servlet, jakarta.persistence, jakarta.validatio
 
 ## 3. Arquitetura em camadas
 
-O código está organizado em pacotes que refletem as camadas e responsabilidades:
+O código está organizado em pacotes que refletem as camadas e responsabilidades. O fluxo de chamadas é: **controller → facade → service(s) → repository**.
 
 ```
 br.com.uds.tools.ged
 ├── GedApplication.java          # Ponto de entrada (Spring Boot)
 ├── config/                      # Configuração da aplicação
 │   ├── JwtProperties.java       # Propriedades JWT (ged.jwt.*)
+│   ├── OpenApiConfig.java       # Configuração OpenAPI/Swagger
 │   ├── SecurityConfig.java      # Cadeia de segurança, CORS, PasswordEncoder
 │   └── StorageProperties.java   # Caminho base de armazenamento (ged.storage.*)
 ├── domain/                      # Entidades JPA (modelo de domínio)
@@ -60,37 +61,68 @@ br.com.uds.tools.ged
 │   ├── DocumentRequest.java, DocumentResponse.java, DocumentVersionResponse.java
 │   ├── PageResponse.java
 │   └── InitialSetupRequest.java
-├── repository/                   # Acesso a dados (Spring Data JPA)
+├── repository/                  # Acesso a dados (Spring Data JPA)
 │   ├── UserRepository.java
 │   ├── DocumentRepository.java
 │   └── DocumentVersionRepository.java
-├── service/                     # Regras de negócio
+├── facade/                      # Camada intermediária entre controller e services
+│   ├── UserFacade.java
+│   ├── DocumentFacade.java
+│   ├── FileStorageFacade.java
+│   └── impl/
+│       ├── UserFacadeImpl.java
+│       ├── DocumentFacadeImpl.java
+│       └── FileStorageFacadeImpl.java
+├── service/                     # Regras de negócio (uma classe por caso de uso)
 │   ├── AuthService.java
-│   ├── UserService.java
-│   ├── DocumentService.java
-│   └── FileDownload.java        # DTO para download (bytes + nome)
-├── storage/                     # Armazenamento físico de arquivos
-│   └── FileStorageService.java
+│   ├── FileDownload.java        # DTO para download (bytes + nome)
+│   ├── user/                    # Serviços de usuário
+│   │   ├── AbstractUserService.java
+│   │   ├── CountUserService.java, FindAllUserService.java, FindByIdUserService.java
+│   │   ├── GetByUsernameUserService.java
+│   │   ├── CreateUserService.java, CreateInitialAdminUserService.java
+│   │   ├── UpdateUserService.java, DeleteByIdUserService.java
+│   │   └── ...
+│   ├── document/                # Serviços de documento
+│   │   ├── AbstractDocumentService.java
+│   │   ├── FindAllDocumentService.java, FindByIdDocumentService.java
+│   │   ├── CreateDocumentService.java, UpdateDocumentService.java, DeleteByIdDocumentService.java
+│   │   ├── PublishDocumentService.java, ArchiveDocumentService.java
+│   │   ├── ListVersionsDocumentService.java, UploadVersionDocumentService.java
+│   │   ├── DownloadCurrentDocumentService.java, DownloadVersionDocumentService.java
+│   │   └── ...
+│   └── storage/file/            # Serviços de armazenamento físico
+│       ├── AbstractStorageService.java
+│       ├── PersistFileStoreService.java
+│       └── DeleteByFileKeyStorageService.java
 ├── security/                    # Autenticação e identidade
 │   ├── JwtService.java
 │   ├── JwtAuthenticationFilter.java
-│   └── UserPrincipal.java      # Principal do Spring Security
-└── web.controller/             # Controllers REST e tratamento global de erros
+│   └── UserPrincipal.java       # Principal do Spring Security
+└── web.controller/              # Controllers REST (um controller por recurso/ação)
     ├── AuthController.java
     ├── SetupController.java
-    ├── UserController.java
-    ├── DocumentController.java
-    └── GlobalExceptionHandler.java
+    ├── GlobalExceptionHandler.java
+    ├── user/                    # CRUD de usuários (ADMIN)
+    │   ├── CreateUserController.java, ListUserController.java, GetUserController.java
+    │   ├── UpdateUserController.java, DeleteUserController.java
+    │   └── ...
+    └── document/                # CRUD e versionamento de documentos
+        ├── CreateDocumentController.java, ListDocumentController.java, GetDocumentController.java
+        ├── UpdateDocumentController.java, DeleteDocumentController.java
+        ├── DownloadDocumentController.java, UploadDocumentController.java
+        └── ...
 ```
 
-- **Web (controller)**: recebe HTTP, valida entrada (`@Valid`), delega para serviços e devolve DTOs.
-- **Service**: orquestra repositórios e `FileStorageService`, aplica regras de negócio e permissões.
+- **Web (controller)**: recebe HTTP, valida entrada (`@Valid`), delega para a **facade** e devolve DTOs. Cada controller é responsável por uma ação ou conjunto pequeno de endpoints (ex.: `CreateUserController` apenas POST de usuário).
+- **Facade**: camada intermediária que orquestra um ou mais **services**; expõe uma API estável para os controllers e centraliza transações (`@Transactional`) quando necessário. Controllers dependem das interfaces (ex.: `UserFacade`, `DocumentFacade`), não dos services diretamente.
+- **Service**: classes pequenas, uma por caso de uso (ex.: `FindByIdUserService`, `CreateDocumentService`). Estendem classes abstratas (`AbstractUserService`, `AbstractDocumentService`) para reutilizar mapeamento para DTO e acesso ao usuário corrente. Orquestram repositórios e, no caso de documentos, a `FileStorageFacade` para arquivos.
 - **Repository**: interfaces Spring Data JPA; sem lógica de negócio.
 - **Domain**: entidades JPA; representam o modelo persistido.
 - **DTO**: request/response da API; desacoplam contrato da API do domínio.
-- **Config**: beans de configuração (segurança, CORS, propriedades customizadas).
+- **Config**: beans de configuração (segurança, CORS, OpenAPI, propriedades customizadas).
 - **Security**: geração/validação de JWT e filtro que preenche o contexto de segurança.
-- **Storage**: gravação e leitura de arquivos em disco (base-path configurável).
+- **Storage (service.storage.file + FileStorageFacade)**: gravação e leitura de arquivos em disco (base-path configurável); a facade abstrai os serviços de persistência e exclusão por `fileKey`.
 
 ---
 
@@ -98,11 +130,11 @@ br.com.uds.tools.ged
 
 ### 4.1 Arquitetura em camadas (Layered Architecture)
 
-Separação clara entre apresentação (web), negócio (service), persistência (repository) e domínio (domain), com fluxo unidirecional: controller → service → repository.
+Separação clara entre apresentação (web), facade, negócio (service), persistência (repository) e domínio (domain), com fluxo unidirecional: **controller → facade → service → repository**. A camada **facade** desacopla os controllers dos serviços concretos e centraliza orquestração e transações.
 
 ### 4.2 Injeção de dependência (DI)
 
-Uso de **constructor injection** via `@RequiredArgsConstructor` (Lombok) e `@Autowired` implícito no Spring. Controllers e serviços dependem de interfaces/implementações injetadas, o que facilita testes e troca de implementações.
+Uso de **constructor injection** via `@RequiredArgsConstructor` (Lombok) e `@Autowired` implícito no Spring. Controllers dependem das **interfaces de facade** (ex.: `UserFacade`, `DocumentFacade`); facades dependem dos **services** concretos (ex.: `FindByIdUserService`, `CreateDocumentService`); services dependem dos **repositories**. Essa cadeia facilita testes (mocks nas interfaces) e troca de implementações.
 
 ### 4.3 Repository (Spring Data JPA)
 
@@ -130,9 +162,13 @@ Propriedades em `application.yml` (e `application-docker.yml` para o perfil `doc
 
 Controllers e serviços podem lançar exceções sem tratar manualmente em cada endpoint.
 
-### 4.8 Princípio de responsabilidade única (SRP)
+### 4.8 Facade
 
-Cada classe tem um foco: controllers só orquestram chamadas e respostas; serviços contêm regras de negócio; repositórios apenas acesso a dados; `FileStorageService` apenas arquivos em disco; `JwtService` apenas tokens.
+As **facades** (`UserFacade`, `DocumentFacade`, `FileStorageFacade`) expõem uma API estável para os controllers e delegam para um ou mais services. Reduzem o acoplamento entre web e regras de negócio e concentram transações (`@Transactional`) e orquestração (ex.: exclusão de documento com remoção de arquivos em disco em `DocumentFacadeImpl.deleteById`).
+
+### 4.9 Princípio de responsabilidade única (SRP)
+
+Cada classe tem um foco: **controllers** tratam um recurso/ação (ex.: `CreateUserController` só POST de usuário); **facades** orquestram services e transações; **services** implementam um caso de uso (ex.: `FindByIdUserService` só busca por ID); repositórios apenas acesso a dados; serviços de storage apenas arquivos em disco; `JwtService` apenas tokens.
 
 ---
 
@@ -169,8 +205,9 @@ Cada classe tem um foco: controllers só orquestram chamadas e respostas; servi�
 
 ## 8. Armazenamento de arquivos
 
-- **FileStorageService** (`storage/`): grava arquivos enviados (multipart) em diretório configurável (`ged.storage.base-path`). Estrutura de chave: `documentId/versionId/nomeDoArquivo.ext`. Suporta extensões permitidas (ex.: .pdf, .png, .jpg, .jpeg); validação de extensão e sanitização de nome para evitar path traversal.
-- **Integração com domínio**: `DocumentVersion` guarda `fileKey`; o serviço de documentos orquestra criação de versão, chamada ao `FileStorageService` e atualização do `fileKey` após o upload. Download usa o mesmo serviço para resolver path e stream de bytes.
+- **FileStorageFacade** (`facade/`): interface que expõe `store`, `deleteByFileKey` e `resolve`; a implementação delega para os services de storage (`PersistFileStoreService`, `DeleteByFileKeyStorageService`) e usa `StorageProperties` para o caminho base.
+- **Services de storage** (`service/storage/file/`): **PersistFileStoreService** grava arquivos enviados (multipart) em diretório configurável (`ged.storage.base-path`). Estrutura de chave: `documentId/versionId/nomeDoArquivo.ext`. Suporta extensões permitidas (ex.: .pdf, .png, .jpg, .jpeg); validação de extensão e sanitização de nome em `AbstractStorageService`. **DeleteByFileKeyStorageService** remove o arquivo físico referenciado pelo `fileKey`.
+- **Integração com domínio**: `DocumentVersion` guarda `fileKey`; a facade de documentos orquestra criação de versão (via `UploadVersionDocumentService`), chamada ao `FileStorageFacade.store` e atualização do `fileKey`. Download usa `FileStorageFacade.resolve` para obter o path e ler os bytes.
 - **Perfil docker**: o caminho de storage pode ser mapeado para volume no container (ex.: `/var/ged/data/storage`).
 
 ---
@@ -190,7 +227,10 @@ Cada classe tem um foco: controllers só orquestram chamadas e respostas; servi�
 
 ## 10. Testes
 
-- **Testes de unidade**: serviços (ex.: `AuthService`, `UserService`, `DocumentService`), `JwtService`, `JwtAuthenticationFilter`, `FileStorageService`, e controllers (ex.: `SetupController`) com mocks (Mockito) e, quando aplicável, `@WebMvcTest` ou contexto mínimo.
+- **Testes de unidade de services**: cada service (ex.: `CountUserService`, `CreateDocumentService`, `FindByIdDocumentService`, `PersistFileStoreService`) é testado com `@ExtendWith(MockitoExtension.class)`, mocks dos repositórios e, quando usam `SecurityContextHolder`, configuração de `UserPrincipal` em `@BeforeEach`. Serviços de documento que estendem `AbstractDocumentService` usam `@MockitoSettings(strictness = Strictness.LENIENT)` quando alguns testes não utilizam o contexto de segurança.
+- **Testes de unidade de facades**: `UserFacadeImplTest`, `DocumentFacadeImplTest`, `FileStorageFacadeImplTest` verificam que as facades delegam corretamente para os services injetados.
+- **Testes de unidade de controllers**: cada controller (ex.: `CreateUserController`, `ListDocumentController`, `SetupController`) é testado com `@WebMvcTest`, `@AutoConfigureMockMvc(addFilters = false)` e `@MockBean` para a facade e para `JwtService` (necessário ao subir o contexto). Requisições são simuladas com `MockMvc` e respostas verificadas com `jsonPath` e status HTTP.
+- **Testes de serviços e filtros**: `AuthService`, `JwtService`, `JwtAuthenticationFilter` continuam com testes dedicados; configuração mínima ou mocks conforme o caso.
 - **Testes de integração de repositório**: `UserRepositoryTest`, `DocumentRepositoryTest`, `DocumentVersionRepositoryTest` com `@SpringBootTest`, H2 em memória (MODE=MySQL) e Flyway aplicando as migrations de `db/migration/`, garantindo que o schema e os repositórios funcionem em conjunto.
 - **Configuração de teste**: `src/test/resources/application.yml` define DataSource H2 e dialect para os testes que precisam de banco; nenhuma alteração no código de produção é necessária para rodar esses testes.
 
@@ -198,4 +238,4 @@ Cada classe tem um foco: controllers só orquestram chamadas e respostas; servi�
 
 ## 11. Resumo
 
-O backend do GED utiliza **Java 21** e **Spring Boot 3** em uma arquitetura em camadas (web, service, repository, domain, dto, config, security, storage), com padrões como **Repository**, **DTO**, **DI**, **Filter** para JWT e **Controller Advice** para erros. A segurança é **stateless** com **JWT**; a persistência usa **JPA** e **Flyway** sobre **MySQL**; o armazenamento de arquivos é isolado em um serviço dedicado e configurável. A combinação de Spring Boot, propriedades externalizadas e testes com H2/Flyway permite evoluir o sistema mantendo clareza e testabilidade.
+O backend do GED utiliza **Java 21** e **Spring Boot 3** em uma arquitetura em camadas (web, **facade**, service, repository, domain, dto, config, security, storage), com padrões como **Facade**, **Repository**, **DTO**, **DI**, **Filter** para JWT e **Controller Advice** para erros. Os **controllers** e **services** foram refatorados em classes menores (um controller por recurso/ação, um service por caso de uso); a camada **facade** orquestra os services e centraliza transações. A segurança é **stateless** com **JWT**; a persistência usa **JPA** e **Flyway** sobre **MySQL**; o armazenamento de arquivos é abstraído pela **FileStorageFacade** e implementado por services em `service/storage/file/`. A combinação de Spring Boot, propriedades externalizadas e testes (unitários de service, facade e controller, além de integração de repositório com H2/Flyway) permite evoluir o sistema mantendo clareza e testabilidade.
